@@ -1,6 +1,6 @@
 # Microframework
 
-# Estrutura de Projeto Derivado com Git (Upstream)
+## Estrutura de Projeto Derivado com Git (Upstream)
 
 Este documento explica como criar um projeto derivado do Microframework, permitindo manter suas personalizações e, ao mesmo tempo, atualizar o projeto com melhorias do Microframework sempre que necessário.
 
@@ -16,8 +16,7 @@ Este documento explica como criar um projeto derivado do Microframework, permiti
 ## 1. Clonar o Microframework como base do novo projeto
 
 ```bash
-git clone https://github.com/exemplo/projetoA.git projetoB
-cd projetoB
+git clone https://github.com/Mfwks/Microframework.git .
 ```
 
 ---
@@ -28,7 +27,7 @@ Renomeie o remote original para `upstream` e adicione o seu repositório como `o
 
 ```bash
 git remote rename origin upstream
-git remote add origin https://github.com/seuusuario/projetoB.git
+git remote add origin https://github.com/nome_usuario/novo_projeto.git
 ```
 
 ---
@@ -36,9 +35,9 @@ git remote add origin https://github.com/seuusuario/projetoB.git
 ## 🚀 3. Criar sua branch de trabalho no novo projeto
 
 ```bash
-git checkout -b main  # ou o nome de sua branch principal
+git checkout -b master
 # Faça suas alterações e commits normalmente
-git push -u origin main
+git push -u origin master
 ```
 
 ---
@@ -49,12 +48,12 @@ Sempre que quiser atualizar o novo projeto com as novidades do Microframework:
 
 ```bash
 git fetch upstream
-git merge upstream/main
+git merge upstream/master
 ```
 
 > Para visualizar as mudanças antes de mesclar:
 ```bash
-git log HEAD..upstream/main
+git log HEAD..upstream/master
 ```
 
 ---
@@ -67,15 +66,21 @@ git log HEAD..upstream/main
 
 ---
 
-## Sugestão de estrutura de pastas
+## Estrutura de pastas
 
 ```
-projetoB/
-├── core/          # Código herdado do Microframework (não modificar)
-├── custom/        # Extensões e personalizações próprias
-├── public/        # Arquivos públicos ou expostos (HTML, assets)
-├── config/        # Configurações do novo projeto
-└── README.md
+app/
+├── apis/          # Tratamento de API's
+├── cmds/          # Scripts de commands
+├── crons/         # Endpoints de crons
+├── functions/     # Funções do projeto
+├── infra/         # Core de dados do Microframework
+├── libs/          # Pacotes do projeto
+├── packs/         # Funções primárias do Microframework
+├── streams/       # Streams e sheetviews
+├── tmp/           # Arquivos temporários
+├── views/         # Arquivos de templates
+└── webhooks/      # Configurações do novo projeto
 ```
 
 ---
