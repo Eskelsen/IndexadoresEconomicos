@@ -1,0 +1,65 @@
+#!/usr/bin/env php
+<?php
+
+# Microframework Migrate
+
+if (empty($argv[0])) {
+    exit('O utilitario migrate nao pode ser acessado diretamente' . PHP_EOL);
+}
+
+$axis = dirname(__DIR__, 1) . DIRECTORY_SEPARATOR . 'axis.php';
+
+if (!is_file($axis)) {
+    exit('Axis indisponível.' . PHP_EOL);
+	return;
+}
+
+include $axis;
+include APP . 'hub.php';
+include INFRA . 'system.php';
+
+include INFRA . 'migrations.php';
+
+$cmd = isset($argv[1]) ? $argv[1] : null;
+$arg = isset($argv[2]) ? $argv[2] : null;
+$opt = isset($argv[3]) ? $argv[3] : null;
+
+if (is_null($cmd)) {
+    cli("\e[1mMicroframework Migrate:\e[0m inclua 'cmds' para ver os comandos");
+    return;
+}
+
+if ($cmd=='cmds') {
+	cli('Comandos:');
+	cli("create: \033[32m" . 'Cria uma nova migration' . "\033[0m");
+	cli("up: \033[32m" . 'Avança as migrations, aceita limite $n' . "\033[0m");
+	cli("down: \033[32m" . 'Reverte as migrations, aceita limite $n' . "\033[0m");
+	return;
+}
+
+include APP . 'conex.php';
+
+if ($cmd=='create') {
+	if (empty($arg)) {
+		cli('Este comando requer um nome para identificação.');
+		return;
+	}
+	if ($mig_name = createMigration($arg)) {
+		cli("\033[32mMigration $mig_name criada com sucesso.\033[0m");
+		return;
+	}
+	cli("\033[33mAlgum erro ao criar migration.\033[0m");
+	return;
+}
+
+if ($cmd=='up') {
+	up($arg);
+	return;
+}
+
+if ($cmd=='down') {
+	down($arg);
+	return;
+}
+
+cli('Comando "'. $cmd . '" não encontrado.');

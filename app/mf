@@ -1,0 +1,370 @@
+#!/usr/bin/env php
+<?php
+
+# Microframework Cli
+
+if (empty($argv[0])) {
+    exit('O utilitario mf nao pode ser acessado diretamente' . PHP_EOL);
+}
+
+$axis = dirname(__DIR__, 1) . DIRECTORY_SEPARATOR . 'axis.php';
+
+if (!is_file($axis)) {
+    exit('Axis indisponível.' . PHP_EOL);
+	return;
+}
+
+include $axis;
+include APP . 'hub.php';
+include INFRA . 'system.php';
+
+$cmd = isset($argv[1]) ? $argv[1] : null;
+$arg = isset($argv[2]) ? $argv[2] : null;
+$opt = isset($argv[3]) ? $argv[3] : null;
+$val = isset($argv[4]) ? $argv[4] : null;
+
+if (is_null($cmd)) {
+    cli("\e[1mMicroframework Cli:\e[0m inclua 'cmds' para ver os comandos");
+    return;
+}
+
+if ($cmd=='cmds') {
+	cli('Comandos:');
+	cli("env: \033[32m" . 'Mostra recursos indispensáveis ao ambiente' . "\033[0m");
+	cli("meta: \033[32m" . 'Mostra ou insere valores em configurações' . "\033[0m");
+	cli("routes: \033[32m" . 'Mostra todas as rotas do sistema' . "\033[0m");
+	cli("tabs: \033[32m" . 'Lista tabelas disponíveis no sistema' . "\033[0m");
+	cli("ctab: \033[32m" . 'Cria uma tabela específica' . "\033[0m");
+	cli("dtab: \033[32m" . 'Exclui uma tabela específica' . "\033[0m");
+	cli("start: \033[32m" . 'Cria tabela de usuários e insere o master' . "\033[0m");
+	cli("reset: \033[32m" . 'Exclui tabela de usuários' . "\033[0m");
+	cli("tab: \033[32m" . 'Descreve estrutura da tabela' . "\033[0m");
+	cli("onboarding: \033[32m" . 'Insere usuários de teste' . "\033[0m");
+	cli("cons: \033[32m" . 'Verifica se costante está definida e mostra seu valor' . "\033[0m");
+	cli("creatabs: \033[32m" . 'Cria todas as tabelas do sistema' . "\033[0m");
+	cli("deltabs: \033[32m" . 'Deleta todas as tabelas do sistema' . "\033[0m");
+	return;
+}
+
+include APP . 'conex.php';
+
+if ($cmd=='env') {
+	cli('shell_exec' . ": \033[32m" . function_exists('shell_exec') . "\033[0m");
+	cli('is_writable' . ": \033[32m" . is_writable(__DIR__) . "\033[0m");
+	cli('PDO' . ": \033[32m" . extension_loaded('PDO') . "\033[0m");
+	cli('Conex' . ": \033[32m" . (($conex) ? 'conectado' : 'desconectado') . "\033[0m");
+	return;
+}
+
+if ($cmd=='meta') {
+	if (empty($arg)) {
+		cli("\033[32mInsira o nome do serviço.\033[0m");
+		return;
+	}
+	if (!isset($opt)) {
+		if (!($service = metaLabel($arg))) {
+			cli("\033[32mServiço desconhecido.\033[0m");
+			return;
+		}
+		foreach ($service as $key => $value) {
+			cli("\e[1m$key:\e[0m \033[32m" . $value . "\033[0m");
+		}
+		return;
+	}
+	if (!isset($val)) {
+		$value = metaGet($arg,$opt);
+		$msg = ($value===false) ? "Variável $opt inexistente em $arg" : "Valor em \e[1m$arg para $opt\e[0m: $value";
+		cli("\033[32m$msg\033[0m");
+		return;
+	}
+	$u = metaSet($arg,$opt,$val);
+	$msg = ($u===false) ? 'Valor não atualizado' : 'Valor atualizado';
+	cli("\033[32m$msg no serviço $arg, propriedade $opt: $val\033[0m");
+	return;
+}
+
+if ($cmd=='routes') {
+	include APP . 'routes.php';
+	$total_tab = 120;
+	$route_tab = intval($total_tab * 0.7);
+	$script_tab = intval($total_tab * 0.4);
+	$acl_tab = $total_tab - ($route_tab + $script_tab);
+$green = "\033[32m";  // Verde
+$red = "\033[31m";    // Vermelho
+$yellow = "\033[33m"; // Amarelo
+$reset = "\033[0m";   // Reseta a co
+	foreach ($web as $route => $value) {
+		$script = $value[0] ?? 'null';
+		$acl = $value[1] ?? 'null';
+		printf(
+			"\033[32m%-{$route_tab}s\033[0m\033[31m%-{$script_tab}s\033[0m\033[33m%-{$acl_tab}s\033[0m\n",
+			$route,
+			$script,
+			$acl
+		);
+	}
+}
+
+if ($cmd=='tabs') {
+	foreach (glob(DATA . '*.php') as $file) {
+		if (is_file($file)) {
+			$tab_list[] = basename($file,'.php');
+		}
+	}
+
+	if (empty($tab_list)) {
+		cli('Load tables here.');
+		return;
+	}
+	
+	foreach ($tab_list as $tab) {
+		$structure = tab($tab);
+		if (is_array($structure)) {
+			cli($tab . ": \033[32m" . tableFields($tab) . "\033[0m [dtab]");
+		} else {
+			cli($tab .  ' [ctab]');
+		}
+	}
+	return;
+}
+
+include INFRA . 'xnstall.php';
+
+if ($cmd=='start') {
+
+	create('mf_users');
+
+	$me   = 'Eskelsen';
+	$name = 'Daniel Eskelsen';
+	$hash = sha1($me);
+
+	$vs = [
+		'name'      => $name,
+		'psw'       => sha1('!Dev@2103!'),
+		'access'    => 'master',
+		'phone'     => '553191755993',
+		'email'     => 'unotify@mfwks.com',
+		'hash'      => sha1($hash),
+		'hash_time'	=> 4294967295,
+		'created'   => date('Y-m-d H:i:s'),
+		'public'    => 0,
+		'active'    => 1
+	];
+
+	$user = field('mf_users','email','WHERE email=?',[$vs['email']]);
+
+	if ($user) {
+		cli("\033[33mO sistema já está rodando.\033[0m");
+		return;
+	}
+
+	if (insert('mf_users',$vs)) {
+		cli("\033[32mUsuário maester inserido no sistema. Hash de acesso: $hash\033[0m");
+		return;
+	}
+	cli("\033[33mAlgum erro ao inserir usuário. Verifique credenciais.\033[0m");
+	return;
+}
+
+if ($cmd=='reset') {
+	domainProtection('unotify.mfwks.com');
+	eraseTable('mf_users');
+	cli('Sistema reiniciado. Use "start" pra reinstalar a tabela principal.');
+	return;
+}
+
+if ($cmd=='tab') {
+	if (empty($arg)) {
+		cli('Este comando requer um nome de tabela.');
+		return;
+	}
+	
+	$tab_info = query("describe $arg");
+	
+	if (!$tab_info) {
+		cli('Tabela inexistente.');
+		return;
+	}
+	
+	$maxFieldLength = 20;
+	$maxTypeLength = 20;
+	$maxNullLength = 10;
+	$maxKeyLength = 10;
+	$maxDefaultLength = 20;
+	$maxExtraLength = 20;
+
+	echo str_pad("Field", $maxFieldLength) . "\t";
+	echo str_pad("Type", $maxTypeLength) . "\t";
+	echo str_pad("Null", $maxNullLength) . "\t";
+	echo str_pad("Key", $maxKeyLength) . "\t";
+	echo str_pad("Default", $maxDefaultLength) . "\t";
+	echo str_pad("Extra", $maxExtraLength) . "\n";
+
+	foreach ($tab_info as $row) {
+		echo str_pad($row['Field'], $maxFieldLength) . "\t";
+		echo str_pad($row['Type'], $maxTypeLength) . "\t";
+		echo str_pad($row['Null'], $maxNullLength) . "\t";
+		echo str_pad($row['Key'], $maxKeyLength) . "\t";
+		echo str_pad($row['Default'], $maxDefaultLength) . "\t";
+		echo str_pad($row['Extra'], $maxExtraLength) . "\n";
+	}
+	
+	return;
+}
+
+if ($cmd=='ctab') {
+	if (empty($arg)) {
+		cli('Este comando requer um nome de tabela.');
+		return;
+	}
+	create($arg);
+	return;
+}
+
+if ($cmd=='dtab') {
+	if (empty($arg)) {
+		cli('Este comando requer um nome de tabela.');
+		return;
+	}
+	domainProtection('unotify.mfwks.com');
+	eraseTable($arg);
+	return;
+}
+
+if ($cmd=='onboarding') {
+
+	if (!tab('mf_users')) {
+		cli("\033[33mTabela mf_users ausente.\033[0m");
+		return;
+	}
+
+	# Usuário Padrão
+	
+	$name = 'Usuário Padrão';
+	$hash = sha1($name);
+
+	$users[$hash] = [
+		'name'      => $name,
+		'psw'       => sha1('!User@2023#'),
+		'access'    => 'user',
+		'email'     => 'contato@microframeworks.com',
+		'hash'      => sha1($hash),
+		'hash_time'	=> 4294967295,
+		'created'   => date('Y-m-d H:i:s'),
+		'public'    => 1,
+		'active'    => 1
+	];
+	
+	# Conta de auditoria
+	
+	$name = 'Auditor';
+	$hash = sha1($name);
+
+	$users[$hash] = [
+		'name'      => $name,
+		'psw'       => sha1('!Aud@2023#'),
+		'access'    => 'auditor',
+		'email'     => 'pix@microframeworks.com',
+		'hash'      => sha1($hash),
+		'hash_time'	=> 4294967295,
+		'created'   => date('Y-m-d H:i:s'),
+		'public'    => 1,
+		'active'    => 1
+	];
+	
+	# Conta de Analista
+	
+	$name = 'Analista';
+	$hash = sha1($name);
+
+	$users[$hash] = [
+		'name'      => $name,
+		'psw'       => sha1('!Analyst@2023#'),
+		'access'    => 'auditor',
+		'email'     => 'dev@microframeworks.com',
+		'hash'      => sha1($hash),
+		'hash_time'	=> 4294967295,
+		'created'   => date('Y-m-d H:i:s'),
+		'public'    => 1,
+		'active'    => 1
+	];
+	
+	# Conta de Analista
+	
+	$name = 'Suporte';
+	$hash = sha1($name);
+
+	$users[$hash] = [
+		'name'      => $name,
+		'psw'       => sha1('!Suporte@2023#'),
+		'access'    => 'support',
+		'email'     => 'contato@mfwks.com',
+		'hash'      => sha1($hash),
+		'hash_time'	=> 4294967295,
+		'created'   => date('Y-m-d H:i:s'),
+		'public'    => 1,
+		'active'    => 1
+	];
+
+	foreach ($users as $chash => $user) {
+		$ok = field('mf_users','name','WHERE name=?',[$user['name']]);
+
+		if ($ok) {
+			cli("\033[33mUsuário $user[name] já inserido no sistema.\033[0m");
+		} elseif (insert('mf_users',$user)) {
+			cli("\033[32mUsuário $user[name] inserido no sistema. Hash de acesso: $chash\033[0m");
+		} else {
+			cli("\033[33mAlgum erro ao inserir usuário $user[name]. Verifique credenciais.\033[0m");
+		}
+	}
+	
+	return;
+}
+
+if ($cmd=='cons') {
+	if (empty($arg)) {
+		cli('Este comando requer um argumento.');
+		return;
+	}
+	if (!defined($arg)) {
+		cli("Constante \e[1m" . $arg . "\e[0m nao definida.");
+		return;
+	}
+	cli("Constante \e[1m" . $arg . "\e[0m definida como  \e[1m\e[1m\033[33m" . constant($arg) . "\033[0m\e[0m");
+	return;
+}
+
+foreach (glob(DATA . '*.php') as $file) {
+	if (is_file($file)) {
+		$tab_list[] = basename($file,'.php');
+	}
+}
+
+if ($cmd=='creatabs') {
+
+	if (empty($tab_list)) {
+		cli('Load tables here.');
+		return;
+	}
+	
+	foreach ($tab_list as $tab) {
+		create($tab);
+	}
+	return;
+}
+
+if ($cmd=='deltabs') {
+	
+	if (empty($tab_list)) {
+		cli('No tables here.');
+		return;
+	}
+	domainProtection('unotify.mfwks.com');
+	foreach ($tab_list as $tab) {
+		eraseTable($tab);
+		cli("\033[33mA tabela $tab excluída (remove opera ingenuamente).\033[0m");
+	}
+	return;
+}
+
+cli('Comando "'. $cmd . '" não encontrado.');
