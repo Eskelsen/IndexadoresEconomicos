@@ -73,9 +73,8 @@ app/
 ├── apis/          # Tratamento de API's
 ├── cmds/          # Scripts de commands
 ├── crons/         # Endpoints de crons
-├── functions/     # Funções do projeto
 ├── infra/         # Core de dados do Microframework
-├── libs/          # Pacotes do projeto
+├── libs/          # Pacotes e funções do projeto
 ├── packs/         # Funções primárias do Microframework
 ├── streams/       # Streams e sheetviews
 ├── tmp/           # Arquivos temporários
