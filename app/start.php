@@ -48,4 +48,6 @@ $acl	= $result[1] ?? false;
 
 // To change almost everything here
 
-exit('The work starts here.');
+// exit('The work starts here.');
+
+include VIEWS . 'default.html';

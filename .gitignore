@@ -6,6 +6,7 @@
 *.zip
 
 /backups/
+/tests/
 /vendor/
 
 /app/tmp/*
@@ -21,3 +22,5 @@
 axis.php
 app/config.php
 app/web.php
+
+manifest.json
