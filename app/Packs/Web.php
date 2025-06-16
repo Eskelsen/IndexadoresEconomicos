@@ -47,4 +47,10 @@ class Web
 		print_r($params);
 		// Saída: ['conta_id' => '35', 'instancia_id' => '42']
 	}
+	
+	public function request($in = '')
+	{
+		$request = $_SERVER['REQUEST_URI'] ?? '/';
+		return preg_replace('/^\\' . $in . '/', '', parse_url($request, PHP_URL_PATH));
+	}
 }
