@@ -6,51 +6,60 @@ class Web
 {
 	public array $routes;
 	
-	public function add($in)
+	public function init($in = '')
 	{
-		$this->routes[] = $in;
+		$call = $this->request($in);
+		return $this->search($call);
 	}
 	
-	public function match()
+	public function add($in, $mid = false, $acl = false)
 	{
-		$padrao = '/conta/{conta_id}/instancia/{instancia_id}/configurar/{alfabeto}/action';
-
+		$this->routes[] = [$in, $mid, $acl];
+	}
+	
+	public function request($in = '')
+	{
+		$in = trim($in,'/');
+		$request = $_SERVER['REQUEST_URI'] ?? '/';
+		return preg_replace('/^\/' . $in . '/', '', parse_url($request, PHP_URL_PATH));
+	}
+	
+	public function search($in)
+	{
+		if (empty($this->routes)) {
+			return false;
+		}
+		foreach ($this->routes as $route) {
+			if ($this->match($in,$route[0])) {
+				print_r('kkk');
+				return $route;
+			}
+		}
+		return false;
+	}
+	
+	public function match($url,$padrao)
+	{
 		$resultado = '#^' . preg_replace('/{[^}]+}/', '([^/]+)', $padrao) . '$#';
 
-		$url = "/conta/abc/instancia/123/configurar/xyz/action";
-
-		if (preg_match($resultado, $url, $matches)) {
-			print_r($matches);
+		if (!preg_match($resultado, $url, $matches)) {
+			return false;
 		}
-
-		preg_match_all('/{([^}]+)}/', $padrao, $fixas);
+		
+		print_r($matches); // The problem laying here
+		
+		if (!preg_match_all('/{([^}]+)}/', $padrao, $fixas)) {
+			// return false;
+		}
+		
+		print_r($fixas);
 
 		$labels = $fixas[1];
-
-		print_r($labels);
 
 		unset($matches[0]);
 
 		$len = min(count($matches), count($labels));
 
-		$n = (object) array_combine(array_slice($labels, 0, $len), array_slice($matches, 0, $len));
-
-		print_r($n);
-
-		return;
-
-		$route = '/conta/{conta_id}/instancia/{instancia_id}/configurar/{alfabeto}/action';
-		// $url = '/contas/35/instancia/42/configurar/abc/action';
-		$url = '/conta/35/instancia/42/configurar/abc/action';
-
-		$params = matchRoute($route, $url);
-		print_r($params);
-		// Saída: ['conta_id' => '35', 'instancia_id' => '42']
-	}
-	
-	public function request($in = '')
-	{
-		$request = $_SERVER['REQUEST_URI'] ?? '/';
-		return preg_replace('/^\\' . $in . '/', '', parse_url($request, PHP_URL_PATH));
+		return (object) array_combine(array_slice($labels, 0, $len), array_slice($matches, 0, $len));
 	}
 }
