@@ -12,9 +12,9 @@ class Web
 		return $this->search($call);
 	}
 	
-	public function add($in, $mid = false, $acl = false)
+	public function add($url, $mid = false, $acl = false)
 	{
-		$this->routes[] = [$in, $mid, $acl];
+		$this->routes[] = (object) ['url' => $url, 'mid' => $mid, 'acl' => $acl];
 	}
 	
 	public function request($in = '')
@@ -30,8 +30,10 @@ class Web
 			return false;
 		}
 		foreach ($this->routes as $route) {
-			if ($this->match($in,$route[0])) {
-				print_r('kkk');
+			if ($args = $this->match($in,$route->url)) {
+				if (is_object($args)) {
+					$route->args = $args;
+				}
 				return $route;
 			}
 		}
@@ -46,13 +48,9 @@ class Web
 			return false;
 		}
 		
-		print_r($matches); // The problem laying here
-		
-		if (!preg_match_all('/{([^}]+)}/', $padrao, $fixas)) {
-			// return false;
+		if (!(preg_match_all('/{([^}]+)}/', $padrao, $fixas))) {
+			return true;
 		}
-		
-		print_r($fixas);
 
 		$labels = $fixas[1];
 
