@@ -2,6 +2,8 @@
 
 # Functions
 
+# [tmp] 2025-07-05 Saturday: move to another place, separate functions
+
 function vd($in){
 	echo '<pre>';
 	if (func_num_args()==1) {
