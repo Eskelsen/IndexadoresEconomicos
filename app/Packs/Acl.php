@@ -2,7 +2,7 @@
 
 namespace App\Packs; # [tmp] 2025-07-05 Saturday: work on it
 
-class Strings
+class Acl
 {
 	public function acl($in){
 		return $this->xcl($in,'usr','access');
