@@ -2,7 +2,7 @@
 
 namespace App\Packs;
 
-class http
+class Http
 {
 	public function response($msgdata, $code = 200){
 		$response_key = ($code<400) ? 'response' : 'error';
