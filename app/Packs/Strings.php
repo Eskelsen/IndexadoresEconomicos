@@ -45,7 +45,7 @@ class Strings
 	{
 		$name = preg_replace('/[^\p{L}\p{N}\s\'-]/u', '', $name);
 		$name = mb_strtolower($name);
-		$prepositions = ['de', 'da', 'do', 'dos', 'das', 'e', 'del'];
+		$prepositions = ['de', 'da', 'do', 'dos', 'das', 'e', 'del', 'la', 'las', 'los', 'di', 'du', 'der', 'den', 'des', 'von', 'van', 'of', 'af'];
 		$words = explode(' ', $name);
 		$capitalized = array_map(function($word) use ($prepositions) {
 			return in_array($word, $prepositions) ? $word : self::capName($word);
