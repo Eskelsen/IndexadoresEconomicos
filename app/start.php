@@ -8,7 +8,7 @@ ob_start();
 	include APP . 'config.php'; // tmp
 
 // tmp, to remember
-spl_autoload_register(function ($class) {
+spl_autoload_register(function ($class) { // to change
     $prefix = 'App\\';
     $base_dir = __DIR__ . '/src/App/';
 
