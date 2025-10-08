@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Packs;
+namespace App\Core;
 
 class Files # [tmp] 2025-07-06 Sunday: work on it
 {

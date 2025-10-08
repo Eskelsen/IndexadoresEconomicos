@@ -7,7 +7,7 @@ $start_time = microtime(true);
 
 # Domain
 define('BASE', 		'/');
-define('DOMAIN',	'mfwks.com');
+define('DOMAIN',	'mf.mfwks.com');
 define('SITE', 		'https://' . DOMAIN);
 
 # Application Directories
@@ -19,8 +19,6 @@ define('CRONS',		APP	. 'crons/');
 define('COMMANDS',	APP	. 'cmds/');
 define('INFRA',		APP . 'infra/');
 define('DATA', 		INFRA . 'data/');
-define('LIBS',		APP	. 'libs/'); # remove
-define('PACKS',		APP	. 'packs/'); # remove
 define('STREAMS',	APP . 'streams/');
 define('TMP', 		APP . 'tmp/');
 define('VIEWS',		APP . 'views/');

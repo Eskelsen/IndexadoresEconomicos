@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Packs;
+namespace App\Core;
 
 class Strings
 {
