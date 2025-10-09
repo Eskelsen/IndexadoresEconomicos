@@ -5,27 +5,28 @@
 # Hold headers
 ob_start();
 
-	include APP . 'config.php'; // tmp
+include APP . 'config.php';
 
-// tmp, to remember
-spl_autoload_register(function ($class) { // to change
+spl_autoload_register(function ($class) {
     $prefix = 'App\\';
     $base_dir = __DIR__ . '/src/App/';
 
-    if (strncmp($prefix, $class, strlen($prefix)) !== 0) return;
+    if (strncmp($prefix, $class, strlen($prefix)) !== 0) {
+		return;
+	}
 
     $relative_class = substr($class, strlen($prefix));
     $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-    if (file_exists($file)) require $file;
+	
+    if (file_exists($file)) {
+		require $file;
+	}
 });
 
 
-# Hub, Routes & Basics
-// include APP . 'hub.php';
-// include APP . 'routes.php';
-// include APP . 'basics.php';
-// include APP . 'conex.php';
+# Routes & Basic Data
+include APP . 'web.php';
+include APP . 'basics.php';
 
 # Request stream
 // $in = request();
