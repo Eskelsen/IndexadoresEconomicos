@@ -15,7 +15,6 @@ if (!is_file($axis)) {
 }
 
 include $axis;
-include APP . 'hub.php';
 include INFRA . 'system.php';
 
 $cmd = isset($argv[1]) ? $argv[1] : null;

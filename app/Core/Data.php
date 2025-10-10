@@ -8,7 +8,7 @@ class Data
 {
 	public $conex;
 	
-	public function __construct()
+	public function __construct() # [tmp] 2025-10-10 Friday: prepare multidatabase options
 	{
 		try {
 			$options = [
@@ -186,6 +186,7 @@ class Data
 		if (!$this->conex) {
 			return false;
 		}
+		# [tmp] 2025-10-10 Friday: gestão multidatabase aqui
 		try {
 			$stmt = $this->conex->prepare($sql);
 			$made = $v ? $stmt->execute($v) : $stmt->execute();
