@@ -8,8 +8,13 @@ class Data
 {
 	public $conex;
 	
-	public function __construct() # [tmp] 2025-10-10 Friday: prepare multidatabase options
+	public function __construct($instance = false)
 	{
+		global $database;
+		if ($instance) {
+			$database = $instance;
+		}
+		extract($database);
 		try {
 			$options = [
 				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -18,7 +23,7 @@ class Data
 				PDO::ATTR_PERSISTENT		 => true,
 				PDO::ATTR_TIMEOUT            => 60
 			];
-			$this->conex = new PDO("mysql:host=".HOST.";dbname=".DB, USER, PSW, $options);
+			$this->conex = new PDO("$driver:host=$host;dbname=$db", $user, $psw, $options);
 			$this->conex->exec('SET NAMES utf8mb4');
 			$this->conex->exec('SET time_zone = "-03:00";');
 		} catch (PDOException $e) {
