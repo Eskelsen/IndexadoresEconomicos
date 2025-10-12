@@ -7,6 +7,7 @@ use PDO;
 class Data
 {
 	public $conex;
+	public $table;
 	
 	public function __construct($instance = false)
 	{
@@ -34,27 +35,20 @@ class Data
 		return $this->conex;
 	}
 	
-	public function tab($t)
+	public function tab()
 	{
-		$ok = query("SHOW TABLES LIKE '$t';");
-		if (!is_array($ok) OR empty($t)) {
+		$ok = $this->query("SHOW TABLES LIKE '{$this->table}';");
+		if (!is_array($ok) OR empty($this->table)) {
 			return false;
 		}
-		$stmt = $this->sqlExec("DESCRIBE $t");
+		$stmt = $this->sqlExec("DESCRIBE {$this->table}");
 		$data = $stmt ? $stmt->fetchAll() : false;
 		return is_array($data) ? array_column($data,'Field') : false;
 	}
 
-	public function db($db)
+	public function tableFields()
 	{
-		$tmp_dbs = query('SHOW DATABASES;');
-		$lista_dbs = is_array($tmp_dbs) ? array_column($tmp_dbs, 'Database') : false;
-		return is_array($lista_dbs) ? in_array($db, $lista_dbs) : false;
-	}
-
-	public function tableFields($t)
-	{
-		if ($f = tab($t)) {
+		if ($f = $this->tab()) {
 			return implode(',',$f);
 		}
 		return false;
@@ -65,24 +59,24 @@ class Data
 		return ($this->conex) ? $this->conex->quote($in) : false;
 	}
 
-	public function insert($t,$vs)
+	public function insert($vs)
 	{
 		$f = implode(',',array_keys($vs));
 		$v = array_values($vs);
 		$h      = implode(',',array_fill(0,count($v),'?'));
-		$stmt   = $this->sqlExec("INSERT INTO $t ($f) VALUES ($h);", $v);
+		$stmt   = $this->sqlExec("INSERT INTO {$this->table} ($f) VALUES ($h);", $v);
 		return $this->conex && $stmt ? $this->conex->lastInsertId() : false;
 	}
 
-	public function field($t,$f,$cond = null,$v = false)
+	public function field($f,$cond = null,$v = false)
 	{
-		$stmt = $this->sqlExec("SELECT $f FROM $t $cond;",$v);
+		$stmt = $this->sqlExec("SELECT $f FROM {$this->table} $cond;",$v);
 		return $stmt ? $stmt->fetchColumn() : false;
 	}
 
-	public function label($tab,$key,$value,$cond = null,$v = false)
+	public function label($key,$value,$cond = null,$v = false)
 	{
-		if (!$cols = selectAll($tab,"$key,$value",$cond,$v)) {
+		if (!$cols = $this->selectAll("$key,$value",$cond,$v)) {
 			return null;
 		}
 		foreach ($cols as $row) {
@@ -91,48 +85,48 @@ class Data
 		return $n ?? null;
 	}
 
-	public function selectRow($t,$f = '*',$cond = null,$v = false)
+	public function selectRow($f = '*',$cond = null,$v = false)
 	{
-		$stmt = $this->sqlExec("SELECT $f FROM $t $cond;",$v);
+		$stmt = $this->sqlExec("SELECT $f FROM {$this->table} $cond;",$v);
 		return $stmt ? $stmt->fetch() : false;
 	}
 
-	public function selectColumn($t,$f,$cond = null,$v = false)
+	public function selectColumn($f,$cond = null,$v = false)
 	{
-		$stmt = $this->sqlExec("SELECT $f FROM $t $cond;",$v);
+		$stmt = $this->sqlExec("SELECT $f FROM {$this->table} $cond;",$v);
 		$data = $stmt ? $stmt->fetchAll() : false;
 		return is_array($data) ? array_column($data,$f) : false;
 	}
 
-	public function selectAll($t,$f = '*',$cond = null,$v = false)
+	public function selectAll($f = '*',$cond = null,$v = false)
 	{
-		$stmt = $this->sqlExec("SELECT $f FROM $t $cond;",$v);
+		$stmt = $this->sqlExec("SELECT $f FROM {$this->table} $cond;",$v);
 		return $stmt ? $stmt->fetchAll() : false;
 	}
 
-	public function selectCount($t,$f = '*',$cond = null,$v = false)
+	public function selectCount($f = '*',$cond = null,$v = false)
 	{
-		return selectThing($t,$f,'COUNT',$cond,$v);
+		return $this->selectThing($f,'COUNT',$cond,$v);
 	}
 
-	public function selectSum($t,$f = '*',$cond = null,$v = false)
+	public function selectSum($f = '*',$cond = null,$v = false)
 	{
-		return selectThing($t,$f,'SUM',$cond,$v);
+		return $this->selectThing($f,'SUM',$cond,$v);
 	}
 
-	public function selectThing($t,$f,$op,$cond = null,$v = false)
+	public function selectThing($f,$op,$cond = null,$v = false)
 	{
 		$field = "$op($f)";
-		$stmt = $this->sqlExec("SELECT $field FROM $t $cond;",$v);
+		$stmt = $this->sqlExec("SELECT $field FROM {$this->table} $cond;",$v);
 		$n = $stmt ? $stmt->fetch() : false;
 		return (isset($n[$field])) ? $n[$field] : 0;
 	}
 
-	public function update($t,$a,$c,$cvs = [])
+	public function update($a,$c,$cvs = [])
 	{
-		[$f,$fvs] = parameterfy($a);
+		[$f,$fvs] = $this->parameterfy($a);
 		$vs = array_merge($fvs,$cvs);
-		$stmt = $this->sqlExec("UPDATE $t SET $f WHERE $c;",$vs);
+		$stmt = $this->sqlExec("UPDATE {$this->table} SET $f WHERE $c;",$vs);
 		return $stmt ? $stmt->rowCount() : false;
 	}
 
@@ -145,33 +139,33 @@ class Data
 		return [implode(',',$sets),$values];
 	}
 
-	public function increment($t,$f,$c,$v = [])
+	public function increment($f,$c,$v = [])
 	{
-		$stmt = $this->sqlExec("UPDATE $t SET $f=$f+1 WHERE $c;",$v);
+		$stmt = $this->sqlExec("UPDATE {$this->table} SET $f=$f+1 WHERE $c;",$v);
 		return $stmt ? $stmt->rowCount() : false;
 	}
 
-	public function decrement($t,$f,$c,$v = [])
+	public function decrement($f,$c,$v = [])
 	{
-		$stmt = $this->sqlExec("UPDATE $t SET $f=$f-1 WHERE $c;",$v);
+		$stmt = $this->sqlExec("UPDATE {$this->table} SET $f=$f-1 WHERE $c;",$v);
 		return $stmt ? $stmt->rowCount() : false;
 	}
 
-	public function activate($t,$f,$c,$v = [])
+	public function activate($f,$c,$v = [])
 	{
-		$stmt = $this->sqlExec("UPDATE $t SET $f=1 WHERE $c;",$v);
+		$stmt = $this->sqlExec("UPDATE {$this->table} SET $f=1 WHERE $c;",$v);
 		return $stmt ? $stmt->rowCount() : false;
 	}
 
-	public function deactivate($t,$f,$c,$v = [])
+	public function deactivate($f,$c,$v = [])
 	{
-		$stmt = $this->sqlExec("UPDATE $t SET $f=0 WHERE $c;",$v);
+		$stmt = $this->sqlExec("UPDATE {$this->table} SET $f=0 WHERE $c;",$v);
 		return $stmt ? $stmt->rowCount() : false;
 	}
 
-	public function del($t,$c,$v = [])
+	public function del($c,$v = [])
 	{
-		$stmt = $this->sqlExec("DELETE FROM $t WHERE $c;",$v);
+		$stmt = $this->sqlExec("DELETE FROM {$this->table} WHERE $c;",$v);
 		return $stmt ? $stmt->rowCount() : false;
 	}
 
@@ -191,7 +185,6 @@ class Data
 		if (!$this->conex) {
 			return false;
 		}
-		# [tmp] 2025-10-10 Friday: gestão multidatabase aqui
 		try {
 			$stmt = $this->conex->prepare($sql);
 			$made = $v ? $stmt->execute($v) : $stmt->execute();
