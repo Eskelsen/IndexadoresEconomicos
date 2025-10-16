@@ -1,0 +1,164 @@
+#!/usr/bin/env php
+<?php
+
+# Microframework Deploy Cycle
+
+if (empty($argv[0])) {
+    exit('O utilitario cycle nao pode ser acessado diretamente' . PHP_EOL);
+}
+
+$axis = dirname(__DIR__, 1) . DIRECTORY_SEPARATOR . 'axis.php';
+
+if (!is_file($axis)) {
+    exit('Axis indisponível.' . PHP_EOL);
+	return;
+}
+
+include $axis;
+include INFRA . 'system.php';
+
+$cmd = isset($argv[1]) ? $argv[1] : null;
+$arg = isset($argv[2]) ? $argv[2] : null;
+$opt = isset($argv[3]) ? $argv[3] : null;
+
+if (is_null($cmd)) {
+    cli("\e[1mMicroframework Deploy Cycle:\e[0m inclua 'cmds' para ver os comandos");
+    return;
+}
+
+if ($cmd=='cmds') {
+	cli('Comandos:');
+	cli("backup: \033[32m" . 'Faz um novo backup da base de dados' . "\033[0m");
+	cli("load: \033[32m" . 'Carrega um backup para a base de dados' . "\033[0m");
+	cli("copy: \033[32m" . 'Copia último backup para ambientes dev e alpha' . "\033[0m");
+	cli("version: \033[32m" . 'Informações sobre o versionamento do sistema' . "\033[0m");
+	cli("tag: \033[32m" . 'Cria um marcador temporário para ação futura com o dia atual ou, com qualquer argumento, "unknown"' . "\033[0m");
+	return;
+}
+
+$backup = TMP  . 'backup.sql';
+
+if ($cmd=='backup') {
+	if (DEV) {
+		cli("\033[33mVocê está em um ambiente de desenvolvimento.\033[0m");
+		return;
+	}
+	$shell = 'mysqldump -u ' . USER . ' -p' . escapeshellarg(PSW) . ' ' . DB . ' > ' . $backup;
+	$return = shell_exec($shell);
+	if (empty($return)) {
+		cli("\033[32mSucesso ao realizar backup.\033[0m");
+	} else {
+		cli("\031[33mFalha ao realizar backup: $return.\033[0m");
+	}
+	$copy = TMP  . date('YmdHis') . '.sql';
+	$return = shell_exec("cp $backup $copy");
+	if (empty($return)) {
+		cli("\033[32mSucesso ao criar cópia de segurança do backup: $copy.\033[0m");
+	} else {
+		cli("\031[33mFalha ao realizar cópia de segurança do backup: $return.\033[0m");
+	}
+	return;
+}
+
+if ($cmd=='load') {
+	if (!DEV) {
+		cli("\033[33mVocê está no ambiente de produção e não é possível importar base de dados.\033[0m");
+		return;
+	}
+	if (!empty($arg)) {
+		cli("\033[33mConsiderando argumento como nome do backup: $arg (não digite o argumento para obter o carregamento de backup.sql).\033[0m");
+		$backup = TMP  . $arg;
+	}
+	if (!is_file($backup)) {
+		cli("\033[33mEste comando requer um arquivo de backup válido.\033[0m");
+		return;
+	}
+	$shell = 'mysql -u ' . USER . ' -p' . escapeshellarg(PSW) . ' ' . DB . ' < ' . $backup;
+	$return = shell_exec($shell);
+	if (empty($return)) {
+		cli("\033[32mBackup carregado com sucesso!\033[0m");
+	} else {
+		cli("\033[31mFalha ao carregar backup: $return.\033[0m");
+	}
+	return;
+}
+
+if ($cmd=='copy') {
+	if (DEV) {
+		cli("\033[33mVocê está em um ambiente de desenvolvimento.\033[0m");
+		return;
+	}
+	$dev_path = '../dev/app/tmp/';
+	$dev_path = realpath($dev_path);
+	$return = shell_exec("cp $backup $dev_path");
+	if (empty($return)) {
+		cli("\033[32mBackup carregado com sucesso para ambiente \e[1mdev\e[0m\033[0m");
+	} else {
+		cli("\033[31mFalha ao carregar backup para ambiente \e[1mdev\e[0m: $return.\033[0m");
+	}
+	$alpha_path = '../alpha/app/tmp/';
+	$alpha_path = realpath($alpha_path);
+	$return = shell_exec("cp $backup $alpha_path");
+	if (empty($return)) {
+		cli("\033[32mBackup carregado com sucesso para ambiente \e[1malpha\e[0m\033[0m");
+	} else {
+		cli("\033[31mFalha ao carregar backup para ambiente \e[1malpha\e[0m: $return.\033[0m");
+	}
+	return;
+}
+
+if ($cmd=='version') {
+	
+	if (!constant('DB')) {
+		cli("\033[31mFalha ao carregar ambiente: variaveis de ambiente ausentes.\033[0m");
+		return;
+	}
+
+	$head = dirname(__DIR__, 1) . '/.git/HEAD';
+	
+	if (!is_file($head)) {
+		cli("\033[31mFalha ao carregar arquivo do Git [HEAD].\033[0m");
+		return;
+	}
+
+	$ctn = trim(file_get_contents($head));
+	$file = dirname(__DIR__, 1) . '/.git/' .  str_replace('ref: ', '', $ctn);
+	$branch = str_replace('ref: refs/heads/', '', $ctn);
+	
+	if (!is_file($file)) {
+		cli("\033[31mFalha ao carregar arquivo do Git [refs]\033[0m");
+		return;
+	}
+
+	$time = date('Y-m-d H:i:s', filemtime($file));
+	$hash = trim(file_get_contents($file));
+
+	$author = trim(shell_exec('git log -1 --pretty=format:"%an"'));
+	$dataAtual = new \DateTime();
+	$dataInformada = new \DateTime($time);
+	$intervalo = $dataAtual->diff($dataInformada);
+
+	if ($intervalo->y > 0) {
+		$periodo = $intervalo->y . ' ano' . ($intervalo->y > 1 ? 's' : '') . ' atrás';
+	} elseif ($intervalo->m > 0) {
+		$periodo = $intervalo->m . ' mês' . ($intervalo->m > 1 ? 'es' : '') . ' atrás';
+	} elseif ($intervalo->d > 0) {
+		$periodo = $intervalo->d . ' dia' . ($intervalo->d > 1 ? 's' : '') . ' atrás';
+	} elseif ($intervalo->h > 0) {
+		$periodo = $intervalo->h . ' hora' . ($intervalo->h > 1 ? 's' : '') . ' atrás';
+	} elseif ($intervalo->i > 0) {
+		$periodo = $intervalo->i . ' minuto' . ($intervalo->i > 1 ? 's' : '') . ' atrás';
+	} else {
+		$periodo = 'agora mesmo';
+	}
+	cli("Status: \033[1m$branch $time ($periodo) \033[1m\e[1m\033[33m$author\033[0m\e[0m\033[0m\033[0m \033[1m$hash\033[0m.");
+	return;
+}
+
+if ($cmd=='tag') {
+	$date = empty($arg) ? date('Y-m-d l') : 'unknown';
+	echo '# [tmp] ' . $date . ':' . PHP_EOL;
+	return;
+}
+
+cli('Comando "'. $cmd . '" não encontrado.');
