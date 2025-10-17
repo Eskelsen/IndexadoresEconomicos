@@ -6,7 +6,7 @@ class Web
 {
 	public array $routes;
 	
-	public function init($in = '')
+	public function init($in = BASE)
 	{
 		$call = $this->request($in);
 		return $this->search($call);
