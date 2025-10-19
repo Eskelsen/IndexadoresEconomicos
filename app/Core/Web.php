@@ -6,15 +6,20 @@ class Web
 {
 	public array $routes;
 	
-	public function init($in = BASE)
+	public $url;
+	public $stream;
+	public $acl;
+	
+	public function init($in = '')
 	{
 		$call = $this->request($in);
-		return $this->search($call);
+		var_dump($in,$call);
+		$this->search($call);
 	}
 	
-	public function add($url, $mid = false, $acl = false)
+	public function add($url, $stream = false, $acl = false)
 	{
-		$this->routes[] = (object) ['url' => $url, 'mid' => $mid, 'acl' => $acl];
+		$this->routes[] = (object) ['url' => $url, 'stream' => $stream, 'acl' => $acl];
 	}
 	
 	public function request($in = '')
@@ -26,15 +31,24 @@ class Web
 	
 	public function search($in)
 	{
+		echo 'search: ' . $in . PHP_EOL;
 		if (empty($this->routes)) {
 			return false;
 		}
 		foreach ($this->routes as $route) {
+			echo 'route: ' . $route->url . PHP_EOL;
 			if ($args = $this->match($in,$route->url)) {
+				echo 'match' . PHP_EOL;
 				if (is_object($args)) {
-					$route->args = $args;
+					$this->args = $args;
+					$this->url = $route->url;
+					echo $this->url . PHP_EOL;
+					$this->stream = $route->stream;
+					echo $this->stream . PHP_EOL;
+					$this->acl = $route->acl;
+					echo $this->acl . PHP_EOL;
 				}
-				return $route;
+				return $this;
 			}
 		}
 		return false;
@@ -45,10 +59,12 @@ class Web
 		$resultado = '#^' . preg_replace('/{[^}]+}/', '([^/]+)', $padrao) . '$#';
 
 		if (!preg_match($resultado, $url, $matches)) {
+			echo 'false 1: ' . $resultado . PHP_EOL;
 			return false;
 		}
 		
 		if (!(preg_match_all('/{([^}]+)}/', $padrao, $fixas))) {
+			echo 'false 2' . PHP_EOL;
 			return true;
 		}
 
