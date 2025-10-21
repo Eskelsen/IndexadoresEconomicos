@@ -6,47 +6,46 @@ class Web
 {
 	public array $routes;
 	
-	public $url;
-	public $stream;
-	public $acl;
+	public string $url;
+	public string $map;
+	public string $stream;
+	public string $acl;
 	
-	public function init($in = '')
+	public object $args;
+
+	public function init($in = BASE)
 	{
 		$call = $this->request($in);
-		var_dump($in,$call);
-		$this->search($call);
+		return $this->search($call);
 	}
 	
-	public function add($url, $stream = false, $acl = false)
+	public function add($map, $stream = false, $acl = false)
 	{
-		$this->routes[] = (object) ['url' => $url, 'stream' => $stream, 'acl' => $acl];
+		$map = ($map=='/') ? '/' : '/' . trim($map, '/') . '/';
+		$this->routes[] = (object) ['map' => $map, 'stream' => $stream, 'acl' => $acl];
 	}
 	
-	public function request($in = '')
+	private function request($in = '')
 	{
 		$in = trim($in,'/');
 		$request = $_SERVER['REQUEST_URI'] ?? '/';
-		return preg_replace('/^\/' . $in . '/', '', parse_url($request, PHP_URL_PATH));
+		$mid = preg_replace('/^\/' . preg_quote($in, '/') . '/', '', parse_url($request, PHP_URL_PATH));
+		return ($mid AND $mid!='/') ? '/' . trim($mid, '/') . '/' : '/';
 	}
 	
-	public function search($in)
+	private function search($in)
 	{
-		echo 'search: ' . $in . PHP_EOL;
 		if (empty($this->routes)) {
 			return false;
 		}
 		foreach ($this->routes as $route) {
-			echo 'route: ' . $route->url . PHP_EOL;
-			if ($args = $this->match($in,$route->url)) {
-				echo 'match' . PHP_EOL;
+			if ($args = $this->match($in,$route->map)) {
+				$this->url 		= $in;
+				$this->map 		= $route->map;
+				$this->stream 	= $route->stream;
+				$this->acl 		= $route->acl;
 				if (is_object($args)) {
 					$this->args = $args;
-					$this->url = $route->url;
-					echo $this->url . PHP_EOL;
-					$this->stream = $route->stream;
-					echo $this->stream . PHP_EOL;
-					$this->acl = $route->acl;
-					echo $this->acl . PHP_EOL;
 				}
 				return $this;
 			}
@@ -54,17 +53,15 @@ class Web
 		return false;
 	}
 	
-	public function match($url,$padrao)
+	private function match($url,$pattern)
 	{
-		$resultado = '#^' . preg_replace('/{[^}]+}/', '([^/]+)', $padrao) . '$#';
+		$map = '#^' . preg_replace('/{[^}]+}/', '([^/]+)', $pattern) . '$#';
 
-		if (!preg_match($resultado, $url, $matches)) {
-			echo 'false 1: ' . $resultado . PHP_EOL;
+		if (!preg_match($map, $url, $matches)) {
 			return false;
 		}
 		
-		if (!(preg_match_all('/{([^}]+)}/', $padrao, $fixas))) {
-			echo 'false 2' . PHP_EOL;
+		if (!(preg_match_all('/{([^}]+)}/', $pattern, $fixas))) {
 			return true;
 		}
 
