@@ -1,10 +1,10 @@
 <?php
 
-# IGPM
+# Salário Mínimo
 
 use App\Core\Http;
 
-$data['value'] = 2.82;
+$data['value'] = 7.50;
 $data['ref'] = 'setembro de 2025';
 
 // Http::response($data);

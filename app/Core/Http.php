@@ -4,15 +4,16 @@ namespace App\Core;
 
 class Http
 {
-	public function response($msgdata, $code = 200){
+	public static function response($msgdata, $code = 200){
 		$response_key = ($code<400) ? 'response' : 'error';
 		$response[$response_key] = $msgdata;
-		$code = $this->http($code);
+		$code = self::http($code);
 		header("HTTP/1.0 $code");
-		exit(jsonPretty($response));
+		header("Content-Type: application/json; charset=utf-8");
+		exit(Json::pretty($response));
 	}
 
-	public function http($in){
+	public static function http($in){
 		$n[200] = '200 OK';
 		$n[206] = '206 Partial Content';
 		$n[207] = '207 Multi-Status';

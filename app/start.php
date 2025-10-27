@@ -18,10 +18,6 @@ include APP . 'basics.php';
 # Request stream
 $web->init();
 
-echo '<pre>';
-print_r($web);
-echo '</pre>';
-
 if (empty($web->stream)) {
 	include APP . 'streams/pages/404.php';
 	exit;
@@ -33,9 +29,3 @@ if (!is_file(APP . 'streams/' . $web->stream . '.php')) {
 
 # Stream
 include APP . 'streams/' . $web->stream . '.php';
-
-# Middle Streams
-// include STREAMS . 'lock.php'; // remove
-// include STREAMS . 'sessions.php'; // remove
-
-// $access_id = access($in, $stream); // remove more than others
